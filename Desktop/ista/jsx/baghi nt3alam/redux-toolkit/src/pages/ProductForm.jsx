@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { addProduct, selectProducts, updateProduct } from '../features/produits/produitSlice.js'
 
-const emptyForm = { intitule: '', prix: '', categorie: '', image: '' }
+const emptyForm = { intitule: '', prix: '', categorie: '', image: '', devise: 'MAD' }
 
 function ProductForm() {
   const { id } = useParams()
@@ -18,6 +18,7 @@ function ProductForm() {
           prix: String(product.prix),
           categorie: product.categorie,
           image: product.image,
+          devise: product.devise || 'MAD',
         }
       : emptyForm,
   )
@@ -41,6 +42,7 @@ function ProductForm() {
       prix: price,
       categorie: form.categorie.trim(),
       image: form.image.trim(),
+      devise: form.devise,
     }
     if (id) {
       dispatch(updateProduct({ id, ...productData }))
@@ -87,7 +89,7 @@ function ProductForm() {
           </div>
           <div className="form-row">
             <div className="mb-3">
-              <label htmlFor="prix" className="form-label">Prix (MAD)</label>
+              <label htmlFor="prix" className="form-label">Prix ({form.devise})</label>
               <div className="input-group">
                 <input
                   id="prix"

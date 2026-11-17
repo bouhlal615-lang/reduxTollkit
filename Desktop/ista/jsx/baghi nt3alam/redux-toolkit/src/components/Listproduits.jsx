@@ -4,20 +4,24 @@ import { addToCart } from '../features/panier/panierSlice.js'
 import {
   deleteProduct,
   selectFilteredProducts,
+  selectProductsError,
+  selectProductsStatus,
   selectSearchTerm,
   setSearchTerm,
 } from '../features/produits/produitSlice.js'
 
-const formatPrice = (price) =>
+const formatPrice = (price, currency = 'MAD') =>
   new Intl.NumberFormat('fr-MA', {
     style: 'currency',
-    currency: 'MAD',
+    currency,
     maximumFractionDigits: 0,
   }).format(price)
 
 function Listproduits() {
   const dispatch = useDispatch()
   const products = useSelector(selectFilteredProducts)
+  const productsStatus = useSelector(selectProductsStatus)
+  const productsError = useSelector(selectProductsError)
   const searchTerm = useSelector(selectSearchTerm)
 
   const handleDelete = (product) => {
@@ -56,6 +60,15 @@ function Listproduits() {
         </label>
       </div>
 
+      {productsStatus === 'loading' && (
+        <p role="status" className="text-muted">Chargement des produits…</p>
+      )}
+      {productsStatus === 'failed' && (
+        <p role="alert" className="alert alert-warning">
+          {productsError} Les produits déjà disponibles restent affichés.
+        </p>
+      )}
+
       {products.length ? (
         <div className="product-grid">
           {products.map((product) => (
@@ -91,7 +104,7 @@ function Listproduits() {
               <div className="product-card-body">
                 <h3>{product.intitule}</h3>
                 <div className="product-card-bottom">
-                  <span className="product-price">{formatPrice(product.prix)}</span>
+                  <span className="product-price">{formatPrice(product.prix, product.devise)}</span>
                   <button
                     type="button"
                     className="add-cart-button"

@@ -1,4 +1,42 @@
-import { createSelector, createSlice, nanoid } from '@reduxjs/toolkit'
+import { createAsyncThunk, createSelector, createSlice, nanoid } from '@reduxjs/toolkit'
+
+export const fetchProducts = createAsyncThunk(
+  'produits/fetchProducts',
+  async (_, { rejectWithValue }) => {
+    const response = await fetch('https://fakestoreapi.com/products')
+    if (!response.ok) {
+      return rejectWithValue(`Impossible de charger les produits (HTTP ${response.status}).`)
+    }
+
+    const products = await response.json()
+    if (
+      !Array.isArray(products) ||
+      products.some(
+        (product) =>
+          !product ||
+          (typeof product.id !== 'string' && typeof product.id !== 'number') ||
+          typeof product.title !== 'string' ||
+          typeof product.price !== 'number' ||
+          typeof product.category !== 'string' ||
+          typeof product.image !== 'string',
+      )
+    ) {
+      return rejectWithValue('La réponse de FakeStore API est invalide.')
+    }
+
+    return products.map((product) => ({
+      id: String(product.id),
+      intitule: product.title,
+      prix: product.price,
+      categorie: product.category,
+      image: product.image,
+      devise: 'USD',
+    }))
+  },
+  {
+    condition: (_, { getState }) => getState().produits.status !== 'loading',
+  },
+)
 
 const initialProducts = [
   {
@@ -51,6 +89,8 @@ const produitSlice = createSlice({
     items: initialProducts,
     searchTerm: '',
     selectedCategory: 'Toutes',
+    status: 'idle',
+    error: null,
   },
   reducers: {
     addProduct: {
@@ -77,6 +117,21 @@ const produitSlice = createSlice({
       state.selectedCategory = action.payload
     },
   },
+  extraReducers(builder) {
+    builder
+      .addCase(fetchProducts.pending, (state) => {
+        state.status = 'loading'
+        state.error = null
+      })
+      .addCase(fetchProducts.fulfilled, (state, action) => {
+        state.status = 'succeeded'
+        state.items = action.payload
+      })
+      .addCase(fetchProducts.rejected, (state, action) => {
+        state.status = 'failed'
+        state.error = action.payload || action.error.message || 'Une erreur est survenue.'
+      })
+  },
 })
 
 export const {
@@ -88,6 +143,8 @@ export const {
 } = produitSlice.actions
 
 export const selectProducts = (state) => state.produits.items
+export const selectProductsStatus = (state) => state.produits.status
+export const selectProductsError = (state) => state.produits.error
 export const selectSearchTerm = (state) => state.produits.searchTerm
 export const selectSelectedCategory = (state) => state.produits.selectedCategory
 export const selectCategories = createSelector([selectProducts], (products) => [

@@ -1,7 +1,16 @@
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import Filter from '../components/Filter.jsx'
 import Listproduits from '../components/Listproduits.jsx'
+import { fetchProducts } from '../features/produits/produitSlice.js'
 
 function Home() {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(fetchProducts())
+  }, [dispatch])
+
   return (
     <>
       <section className="hero-banner">

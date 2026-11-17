@@ -5,20 +5,25 @@ import {
   incrementQte,
   removeFromCart,
   selectCartItems,
-  selectCartTotal,
+  selectCartTotalsByCurrency,
 } from '../features/panier/panierSlice.js'
 
-const formatPrice = (price) =>
+const formatPrice = (price, currency = 'MAD') =>
   new Intl.NumberFormat('fr-MA', {
     style: 'currency',
-    currency: 'MAD',
+    currency,
     maximumFractionDigits: 0,
   }).format(price)
+
+const formatTotals = (totals) =>
+  Object.entries(totals)
+    .map(([currency, amount]) => formatPrice(amount, currency))
+    .join(' + ')
 
 function Panier() {
   const dispatch = useDispatch()
   const items = useSelector(selectCartItems)
-  const total = useSelector(selectCartTotal)
+  const totalsByCurrency = useSelector(selectCartTotalsByCurrency)
 
   return (
     <section className="cart-page">
@@ -48,7 +53,7 @@ function Panier() {
                 <div className="cart-item-info">
                   <span className="eyebrow">{item.categorie}</span>
                   <h2>{item.intitule}</h2>
-                  <span className="cart-item-price">{formatPrice(item.prix)}</span>
+                  <span className="cart-item-price">{formatPrice(item.prix, item.devise)}</span>
                   <div className="cart-item-controls">
                     <div className="quantity-control" aria-label={`Quantité : ${item.quantity}`}>
                       <button
@@ -76,7 +81,9 @@ function Panier() {
                     </button>
                   </div>
                 </div>
-                <strong className="cart-line-total">{formatPrice(item.prix * item.quantity)}</strong>
+                <strong className="cart-line-total">
+                  {formatPrice(item.prix * item.quantity, item.devise)}
+                </strong>
               </article>
             ))}
             <Link to="/" className="continue-shopping"><i className="bi bi-arrow-left me-2" />Continuer mes achats</Link>
@@ -85,9 +92,9 @@ function Panier() {
           <aside className="order-summary">
             <span className="eyebrow">RÉCAPITULATIF</span>
             <h2>Votre commande</h2>
-            <div className="summary-line"><span>Sous-total</span><span>{formatPrice(total)}</span></div>
+            <div className="summary-line"><span>Sous-total</span><span>{formatTotals(totalsByCurrency)}</span></div>
             <div className="summary-line"><span>Livraison</span><span className="shipping-note">Calculée à la commande</span></div>
-            <div className="summary-total"><span>Total</span><strong>{formatPrice(total)}</strong></div>
+            <div className="summary-total"><span>Total</span><strong>{formatTotals(totalsByCurrency)}</strong></div>
             <button type="button" className="btn btn-dark checkout-button" disabled>
               Finaliser la commande <i className="bi bi-arrow-right ms-2" />
             </button>
